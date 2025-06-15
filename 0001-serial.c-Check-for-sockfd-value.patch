@@ -1,0 +1,32 @@
+From 99d739c1ebf98d33e56a2f6d71b1b54974e9fc06 Mon Sep 17 00:00:00 2001
+From: Luigi Leonardi <leonardi@redhat.com>
+Date: Sun, 15 Jun 2025 18:31:10 +0200
+Subject: [PATCH] serial.c: Check for sockfd value
+
+FD_SET is called regardless `sockfd` value. This can cause unwanted
+behaviour when sockfd is -1, because the bit can be out of range.
+
+Signed-off-by: Luigi Leonardi <leonardi@redhat.com>
+---
+ src/serial.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/serial.c b/src/serial.c
+index e2f8ce7..a395477 100644
+--- a/src/serial.c
++++ b/src/serial.c
+@@ -51,7 +51,10 @@ static void serial_poll(void) {
+     if (connfd == -1) {
+         fd_set accept_set;
+         FD_ZERO(&accept_set);
+-        FD_SET(sockfd, &accept_set);
++
++        if (sockfd >= 0)
++            FD_SET(sockfd, &accept_set);
++
+         int ret = select(sockfd + 1, &accept_set, NULL, NULL, &timeout);
+         if (ret == -1) {
+             LOG_ERR(
+-- 
+2.49.0
+
